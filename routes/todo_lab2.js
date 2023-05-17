@@ -19,10 +19,18 @@ router.get('/:_id', async (req, res) => {
     const db = await connect();
     const { _id } = req.params;
     const todo = await db.collection('todos').findOne({ _id: new ObjectId(_id) });
-    res.send(todo);
+    if (todo) {
+      res.send(todo);
+    } else {
+      res.send({
+        message: 'todoNotFound'
+      })
+    }
   } catch (e) {
     console.log(e);
-    res.status(500).send();
+    res.status(500).send({
+      message: e.message
+    });
   }
 });
 
@@ -37,11 +45,20 @@ router.put('/:_id', async (req, res) => {
       }
       return acc;
     }, {});
-    await db.collection('todos').updateOne({ _id: new ObjectId(_id) }, { $set: todoPatch });
-    res.status(200).send({ ...todoPatch, _id });
+    const { modifiedCount } = await db.collection('todos').updateOne({ _id: new ObjectId(_id) }, { $set: todoPatch });
+    const todo = await db.collection('todos').findOne({ _id: new ObjectId(_id) });
+    if (todo && modifiedCount) {
+      res.send(todo);
+    } else {
+      res.send({
+        message: 'todoNotFound'
+      })
+    } 
   } catch (e) {
     console.log(e);
-    res.status(500).send();
+    res.status(500).send({
+      message: e.message
+    });
   }
 });
 
@@ -62,11 +79,21 @@ router.delete('/:_id', async (req, res) => {
   try {
     const db = await connect();
     const { _id } = req.params;
-    await db.collection('todos').deleteOne({ _id: new ObjectId(_id) });
-    res.send();
+    const { deletedCount } = await db.collection('todos').deleteOne({ _id: new ObjectId(_id) });
+    if (deletedCount) {
+      res.send({ 
+        message: 'success'
+       });
+    } else {
+      res.send({
+        message: 'todoNotFound'
+      })
+    }
   } catch (e) {
     console.log(e);
-    res.status(500).send();
+    res.status(500).send({
+      message: e.message
+    });
   }
 });
 
